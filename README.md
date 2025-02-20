@@ -16,6 +16,15 @@
 - Databse: Mysql8.0
 - ORM: TypeORM
 
+
+## ERD 다이어그램
+
+- [dbdiagram.io 작업링크](https://dbdiagram.io/d/preonboarding-01-67b70c07263d6cf9a0d9d7dc)
+
+![img]()
+
+
+
 ## Project setup
 
 ```bash
