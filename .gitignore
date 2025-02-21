@@ -1,3 +1,8 @@
+# environment
+.development.env
+.production.env
+*.env
+
 # compiled output
 .yarn
 /dist
