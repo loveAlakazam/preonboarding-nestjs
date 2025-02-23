@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "baseUrl": "./",
+    "paths": {
+      "@src/*": ["./src/*"],
+      "@users/*": ["./src/modules/users/*"],
+      "@boards/*": ["./src/modules/boards/*"],
+      "@comments/*": ["./src/modules/comments/*"]
+    }
+  }
+}
