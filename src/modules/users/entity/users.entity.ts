@@ -1,4 +1,3 @@
-import { Exclude } from "class-transformer";
 import { Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
 import { BaseEntity } from "@src/commons/entity/base.entity";
 import { BoardEntity } from "@boards/entity/boards.entity";
@@ -16,7 +15,6 @@ export class UserEntity extends BaseEntity {
   nickname: string;
 
   @Column()
-  @Exclude()
   password: string;
 
   // users:boards=1:N
