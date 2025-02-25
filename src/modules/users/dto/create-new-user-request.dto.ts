@@ -20,6 +20,8 @@ import {
   SHOULD_BE_EXIST,
   SHOULD_BE_STRING,
 } from "@src/commons/errors/commons.error-message";
+import { PasswordNotContainsNickname } from "../validators/password-not-contains-nickname.validator";
+import { PasswordMatch } from "../validators/password-match.validator";
 
 export class CreateNewUserRequestDto {
   /** nickname : 닉네임
@@ -31,7 +33,9 @@ export class CreateNewUserRequestDto {
   @MinLength(USER_NICKNAME_MIN_LENGTH, {
     message: MINLENGTH("nickname", USER_NICKNAME_MIN_LENGTH),
   })
-  @Matches(/^[A-Za-z0-9]+$/, { message: ALLOW_ALPHABET_AND_NUMBER("nickname") })
+  @Matches(/^(?=.*[A-Za-z])[A-Za-z0-9]+$/, {
+    message: ALLOW_ALPHABET_AND_NUMBER("nickname"),
+  })
   nickname: string;
 
   /** password : 비밀번호
@@ -44,12 +48,13 @@ export class CreateNewUserRequestDto {
   @MinLength(USER_PASSWORD_MIN_LENGTH, {
     message: MINLENGTH("password", USER_PASSWORD_MIN_LENGTH),
   })
-  @Matches(/^[A-Za-z]+[0-9]$/, {
+  @Matches(/^(?=.*[A-Za-z])[A-Za-z0-9]+$/, {
     message: ALLOW_ALPHABET_AND_NUMBER("password"),
   })
-  @ValidateIf((o) => !o.password.contains(o.nickname), {
-    message: PASSWORD_CONTAINS_NICKNAME,
-  })
+  // @Validate((o) => !o.password.includes(o.nickname), {
+  //   message: PASSWORD_CONTAINS_NICKNAME,
+  // })
+  @Validate(PasswordNotContainsNickname)
   password: string;
 
   /** passwordConfirm : 비밀번호 확인
@@ -57,8 +62,6 @@ export class CreateNewUserRequestDto {
    */
   @IsNotEmpty({ message: SHOULD_BE_EXIST("passwordConfirm") })
   @IsString({ message: SHOULD_BE_STRING("passwordConfirm") })
-  @ValidateIf((o) => o.password === o.passwordConfirm, {
-    message: PASSWORD_NOT_EQUALS_TO_CONFIRMED_PASSWORD,
-  })
+  @Validate(PasswordMatch)
   passwordConfirm: string;
 }
