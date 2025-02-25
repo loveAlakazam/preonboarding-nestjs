@@ -1,8 +1,17 @@
-import { HttpException, Inject, Injectable } from "@nestjs/common";
+import {
+  HttpException,
+  Inject,
+  Injectable,
+  BadRequestException,
+} from "@nestjs/common";
 import { UserRepository } from "../repositories/users.repository";
 import { CreateNewUserRequestDto } from "../dto/create-new-user-request.dto";
 import { CreateNewUserResponseDto } from "../dto/create-new-user.response.dto";
-import { ALREADY_EXIST_USER } from "../errors/users.error-message";
+import {
+  ALREADY_EXIST_USER,
+  LOGIN_FAILED,
+} from "../errors/users.error-message";
+import { LoginUserRequestDto } from "../dto/login-user.request.dto";
 
 @Injectable()
 export class UsersService {
@@ -27,6 +36,22 @@ export class UsersService {
 
       // 엔티티 -> responseDto로 변경
       return new CreateNewUserResponseDto(newUser);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async loginUser(request: LoginUserRequestDto) {
+    const { nickname, password } = request;
+    try {
+      // 닉네임 정보 확인
+      const user = await this.userRepository.findOneByNickname(nickname);
+      const loginFailed =
+        user === null ? true : user.password !== password ? true : false;
+
+      if (loginFailed) {
+        throw new BadRequestException(LOGIN_FAILED);
+      }
     } catch (error) {
       throw error;
     }
