@@ -1,7 +1,10 @@
 import { Body, Controller, HttpCode, Inject, Post } from "@nestjs/common";
 import { UsersService } from "../services/users.service";
 import { CreateNewUserRequestDto } from "../dto/create-new-user-request.dto";
+import { ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
+import { CreateNewUserResponseDto } from "../dto/create-new-user.response.dto";
 
+@ApiTags("users")
 @Controller("users")
 export class UsersController {
   constructor(
@@ -11,6 +14,12 @@ export class UsersController {
 
   @Post("sign-up")
   @HttpCode(201)
+  @ApiResponse({
+    status: 201,
+    description: "Success",
+    type: CreateNewUserResponseDto,
+  })
+  @ApiOperation({ summary: "create new user" })
   async createNewUser(@Body() requestDto: CreateNewUserRequestDto) {
     return await this.userService.createNewUser(requestDto);
   }

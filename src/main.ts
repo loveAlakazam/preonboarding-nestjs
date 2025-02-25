@@ -1,6 +1,7 @@
 import { NestFactory } from "@nestjs/core";
 import { AppModule } from "./app.module";
 import { BadRequestException, ValidationPipe } from "@nestjs/common";
+import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -11,6 +12,14 @@ async function bootstrap() {
       transform: true, // dto 내부에서 자동변환 적용
     }),
   );
+
+  // swagger
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle("Pre-Onboarding API")
+    .build();
+  const swaggerFactory = () => SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup("api", app, swaggerFactory);
+
   await app.listen(process.env.PORT ?? 3000);
 }
 bootstrap();

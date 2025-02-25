@@ -4,13 +4,8 @@ import {
   Matches,
   MinLength,
   Validate,
-  ValidateIf,
 } from "class-validator";
-import {
-  ALLOW_ALPHABET_AND_NUMBER,
-  PASSWORD_CONTAINS_NICKNAME,
-  PASSWORD_NOT_EQUALS_TO_CONFIRMED_PASSWORD,
-} from "@users/errors/users.error-message";
+import { ALLOW_ALPHABET_AND_NUMBER } from "@users/errors/users.error-message";
 import {
   USER_NICKNAME_MIN_LENGTH,
   USER_PASSWORD_MIN_LENGTH,
@@ -22,6 +17,7 @@ import {
 } from "@src/commons/errors/commons.error-message";
 import { PasswordNotContainsNickname } from "../validators/password-not-contains-nickname.validator";
 import { PasswordMatch } from "../validators/password-match.validator";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class CreateNewUserRequestDto {
   /** nickname : 닉네임
@@ -36,6 +32,7 @@ export class CreateNewUserRequestDto {
   @Matches(/^(?=.*[A-Za-z])[A-Za-z0-9]+$/, {
     message: ALLOW_ALPHABET_AND_NUMBER("nickname"),
   })
+  @ApiProperty({ description: "닉네임", example: "test123" })
   nickname: string;
 
   /** password : 비밀번호
@@ -55,6 +52,7 @@ export class CreateNewUserRequestDto {
   //   message: PASSWORD_CONTAINS_NICKNAME,
   // })
   @Validate(PasswordNotContainsNickname)
+  @ApiProperty({ description: "비밀번호", example: "secretValue1234" })
   password: string;
 
   /** passwordConfirm : 비밀번호 확인
@@ -63,5 +61,6 @@ export class CreateNewUserRequestDto {
   @IsNotEmpty({ message: SHOULD_BE_EXIST("passwordConfirm") })
   @IsString({ message: SHOULD_BE_STRING("passwordConfirm") })
   @Validate(PasswordMatch)
+  @ApiProperty({ description: "비밀번호 확인", example: "secretValue1234" })
   passwordConfirm: string;
 }
