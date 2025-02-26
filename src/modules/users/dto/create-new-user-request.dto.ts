@@ -48,9 +48,6 @@ export class CreateNewUserRequestDto {
   @Matches(/^(?=.*[A-Za-z])[A-Za-z0-9]+$/, {
     message: ALLOW_ALPHABET_AND_NUMBER("password"),
   })
-  // @Validate((o) => !o.password.includes(o.nickname), {
-  //   message: PASSWORD_CONTAINS_NICKNAME,
-  // })
   @Validate(PasswordNotContainsNickname)
   @ApiProperty({ description: "비밀번호", example: "secretValue1234" })
   password: string;

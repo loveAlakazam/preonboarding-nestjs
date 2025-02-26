@@ -10,4 +10,4 @@ export const PASSWORD_CONTAINS_NICKNAME =
 
 export const ALREADY_EXIST_USER = "이미 존재하는 회원입니다.";
 
-export const LOGIN_FAILED = "닉네임과 비밀번호가 올바르지 않습니다.";
+export const LOGIN_FAILED = "닉네임 또는 비밀번호를 확인해주세요.";
