@@ -26,6 +26,7 @@ export class UsersController {
   }
 
   @Post("sign-in")
+  @HttpCode(200)
   @ApiResponse({
     status: 200,
     description: "Success",
