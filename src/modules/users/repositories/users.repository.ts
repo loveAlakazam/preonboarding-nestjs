@@ -30,4 +30,8 @@ export class UserRepository {
   async delete(id: string) {
     await this.dataSource.softDelete(id);
   }
+
+  async removeByNickname(nickname: string) {
+    await this.dataSource.delete({ nickname: nickname });
+  }
 }

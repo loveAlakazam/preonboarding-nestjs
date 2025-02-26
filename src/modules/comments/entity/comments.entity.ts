@@ -15,10 +15,16 @@ export class CommentEntity extends BaseEntity {
   content: string;
 
   // users:comments=1:N
-  @ManyToOne(() => UserEntity, (user) => user.comments)
+  @ManyToOne(() => UserEntity, (user) => user.comments, {
+    createForeignKeyConstraints: false,
+    onDelete: "CASCADE",
+  })
   user: UserEntity;
 
   // boards:comments=1:N
-  @ManyToOne(() => BoardEntity, (board) => board.comments)
+  @ManyToOne(() => BoardEntity, (board) => board.comments, {
+    createForeignKeyConstraints: false,
+    onDelete: "CASCADE",
+  })
   board: BoardEntity;
 }

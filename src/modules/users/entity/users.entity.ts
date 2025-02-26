@@ -18,10 +18,10 @@ export class UserEntity extends BaseEntity {
   password: string;
 
   // users:boards=1:N
-  @OneToMany(() => BoardEntity, (board) => board.user)
+  @OneToMany(() => BoardEntity, (board) => board.user, { cascade: true })
   boards: BoardEntity[];
 
   // users:comments=1:N
-  @OneToMany(() => CommentEntity, (comment) => comment.user)
+  @OneToMany(() => CommentEntity, (comment) => comment.user, { cascade: true })
   comments: CommentEntity[];
 }

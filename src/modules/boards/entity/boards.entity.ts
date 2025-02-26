@@ -1,4 +1,10 @@
-import { Column, Entity, ManyToOne, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import {
+  Column,
+  Entity,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from "typeorm";
 import { BaseEntity } from "@src/commons/entity/base.entity";
 import { UserEntity } from "@users/entity/users.entity";
 import { CommentEntity } from "@comments/entity/comments.entity";
@@ -18,10 +24,15 @@ export class BoardEntity extends BaseEntity {
   content: string;
 
   // users:boards=1:N
-  @ManyToOne(() => UserEntity, (user) => user.boards)
+  @ManyToOne(() => UserEntity, (user) => user.boards, {
+    createForeignKeyConstraints: false,
+    onDelete: "CASCADE",
+  })
   user: UserEntity;
 
   // boards:comments=1:N
-  @OneToMany(() => CommentEntity, (comment) => comment.user)
+  @OneToMany(() => CommentEntity, (comment) => comment.user, {
+    cascade: true,
+  })
   comments: CommentEntity[];
 }
