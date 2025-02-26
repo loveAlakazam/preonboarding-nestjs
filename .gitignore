@@ -1,8 +1,16 @@
+# environment
+.development.env
+.production.env
+*.env
+
 # compiled output
 .yarn
 /dist
 /node_modules
 /build
+
+# vscode
+/.vscode
 
 # Logs
 logs

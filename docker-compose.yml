@@ -1,0 +1,40 @@
+services:
+  # 데이터베이스
+  db:
+    image: mysql:8
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD} # root 계정 비밀번호 설정
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    container_name: onboarding_mysql
+    ports:
+      - "3306:3306" # mysql 기본포트를 사용하도록 수정
+    volumes:
+      - mysql_data:/var/lib/mysql # 데이터 저장볼륨 추가
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  # 백엔드 애플리케이션(Nestjs)
+  app:
+    build:
+      context: . # 현재디렉토리
+      dockerfile: Dockerfile # 도커파일 빌드
+    container_name: onboarding_app
+    env_file:
+      - .env
+    ports:
+      - "3001:3001"
+    depends_on:
+      # db가 실행되야 app이 실행됨.
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/app # 전체 프로젝트 디렉토리를 컨테이너에 마운트
+      - /app/node_modules # node_modules 제외
+
+volumes:
+  mysql_data:
