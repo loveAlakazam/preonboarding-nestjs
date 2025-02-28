@@ -4,8 +4,14 @@ import { BoardRepository } from "@boards/repositories/boards.repository";
 import { UserRepository } from "@users/repositories/users.repository";
 import { CreateNewBoardRequestDto } from "../dtos/create-new-board.request.dto";
 import { NOT_FOUND_USER } from "@src/modules/users/errors/users.error-message";
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { GetListOfBoardsResponseDto } from "../dtos/get-list-of-boards.response.dto";
+import {
+  BOARD_NOT_FOUND,
+  NOT_CONFIRMED_BOARD_PASSWORD,
+} from "../errors/board.error-message";
+import { DeleteBoardDto } from "../dtos/delete-board.request.dto";
+import { UpdateBoardRequestDto } from "../dtos/update-board.request.dto";
 
 describe("BoardsService", () => {
   let boardService: BoardsService;
@@ -37,6 +43,7 @@ describe("BoardsService", () => {
       createdAt: new Date(),
     },
   ];
+  const notFoundBoardId = "999";
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -47,6 +54,10 @@ describe("BoardsService", () => {
           useValue: {
             create: jest.fn(),
             findAll: jest.fn(),
+            findOneById: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            remove: jest.fn(),
           },
         },
         {
@@ -67,7 +78,133 @@ describe("BoardsService", () => {
     jest.clearAllMocks();
   });
 
-  describe("updateBoard", () => {});
+  describe("deleteBoard", () => {
+    it("게시글 id가 존재하지 않으면 NotFoundException 예외를 발생시킨다.", async () => {
+      (boardRepository.findOneById as jest.Mock).mockReturnValue(null);
+
+      const invalidRequest = {
+        id: notFoundBoardId,
+        password: "1234",
+      } as DeleteBoardDto;
+
+      // 예외발생 확인
+      await expect(boardService.deleteBoard(invalidRequest)).rejects.toThrow(
+        new NotFoundException(BOARD_NOT_FOUND),
+      );
+
+      // 삭제쿼리 실행하지 않음을 확인
+      expect(boardRepository.delete).toHaveBeenCalledTimes(0);
+    });
+    it("게시글 비밀번호가 올바르지않으면 BadRequestException 예외를 발생시킨다.", async () => {
+      (boardRepository.findOneById as jest.Mock).mockReturnValue({
+        id: sampleBoardData.id,
+        title: sampleBoardData.title,
+        content: sampleBoardData.content,
+        password: sampleBoardData.password,
+        user: {
+          id: sampleUserData.id,
+          nickname: sampleUserData.nickname,
+        },
+        comments: [],
+      });
+
+      const invalidRequest = {
+        id: sampleBoardData.id,
+        password: "invalidPassword", // invalid
+      } as DeleteBoardDto;
+
+      // 예외발생 확인
+      expect(boardService.deleteBoard(invalidRequest)).rejects.toThrow(
+        new BadRequestException(NOT_CONFIRMED_BOARD_PASSWORD),
+      );
+
+      // 조회쿼리만 실행됨을 확인
+      expect(boardRepository.findOneById).toHaveBeenCalledTimes(1);
+
+      // 삭제쿼리 실행하지 않음을 확인
+      expect(boardRepository.delete).toHaveBeenCalledTimes(0);
+    });
+    it("게시글 삭제를 성공한다.", async () => {
+      (boardRepository.findOneById as jest.Mock).mockReturnValue({
+        id: sampleBoardData.id,
+        title: sampleBoardData.title,
+        content: sampleBoardData.content,
+        password: sampleBoardData.password,
+        user: {
+          id: sampleUserData.id,
+          nickname: sampleUserData.nickname,
+        },
+        comments: [],
+      });
+
+      const request = {
+        id: sampleBoardData.id,
+        password: sampleBoardData.password,
+      } as DeleteBoardDto;
+
+      await expect(boardService.deleteBoard(request)).resolves.not.toThrow();
+
+      // 조회쿼리 실행됨을 확인
+      expect(boardRepository.findOneById).toHaveBeenCalledTimes(1);
+
+      // 삭제쿼리 실행됨을 확인
+      expect(boardRepository.delete).toHaveBeenCalledTimes(1);
+    });
+  });
+  describe("updateBoard", () => {
+    it("게시글 id가 존재하지 않으면 NotFoundException 예외를 발생시킨다.", async () => {
+      (boardRepository.findOneById as jest.Mock).mockReturnValue(null);
+
+      // 예외발생 확인
+      const invalidRequest = {
+        password: "1234",
+        title: "게시글 제목 수정",
+      } as UpdateBoardRequestDto;
+
+      // 예외발생 확인
+      await expect(
+        boardService.updateBoard(notFoundBoardId, invalidRequest),
+      ).rejects.toThrow(new NotFoundException(BOARD_NOT_FOUND));
+
+      // 수정쿼리 실행하지 않음을 확인
+      expect(boardRepository.update).toHaveBeenCalledTimes(0);
+    });
+    it("게시글 비밀번호가 올바르지않으면 BadRequestException 예외를 발생시킨다.", async () => {});
+    it("게시글 수정을 성공한다.", async () => {});
+  });
+  describe("getBoard", () => {
+    it("게시글 id가 존재하지 않으면 NotFoundException 예외를 발생시킨다.", async () => {
+      (boardRepository.findOneById as jest.Mock).mockReturnValue(null);
+
+      await expect(boardService.getBoard(notFoundBoardId)).rejects.toThrow(
+        new NotFoundException(BOARD_NOT_FOUND),
+      );
+    });
+    it("게시글 조회를 성공한다", async () => {
+      const existedBoardId: string = sampleBoardData.id;
+      // Mock설정
+      (boardRepository.findOneById as jest.Mock).mockReturnValue({
+        id: existedBoardId,
+        title: sampleBoardData.title,
+        content: sampleBoardData.content,
+        user: {
+          id: sampleUserData.id,
+          nickname: sampleUserData.nickname,
+        },
+        comments: [],
+      });
+
+      const board = await boardService.getBoard(existedBoardId);
+
+      // 실제결과 확인
+      expect(board).toBeDefined();
+      expect(board.id).toBe(existedBoardId);
+      expect(board.title).toBe(sampleBoardData.title);
+      expect(board.content).toBe(sampleBoardData.content);
+      expect(board.author).toBe(sampleUserData.nickname);
+      expect(board.comments.length).toBe(0);
+    });
+  });
   describe("getListOfBoards", () => {
     it("게시글 리스트 조회를 성공한다", async () => {
       (boardRepository.findAll as jest.Mock).mockResolvedValue(

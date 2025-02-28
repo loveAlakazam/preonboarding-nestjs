@@ -1,4 +1,9 @@
-import { Inject, Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { BoardRepository } from "@boards/repositories/boards.repository";
 import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
 import { UpdateBoardRequestDto } from "@boards/dtos/update-board.request.dto";
@@ -8,7 +13,14 @@ import { CreateNewBoardResponseDto } from "@boards/dtos/create-new-board.respons
 import {
   GetListOfBoardsResponseDto,
   UnitOfList,
-} from "../dtos/get-list-of-boards.response.dto";
+} from "@boards/dtos/get-list-of-boards.response.dto";
+import {
+  BOARD_NOT_FOUND,
+  NOT_CONFIRMED_BOARD_PASSWORD,
+} from "@boards/errors/board.error-message";
+import { DeleteBoardDto } from "../dtos/delete-board.request.dto";
+import { GetBoardResponseDto } from "../dtos/get-board.response.dto";
+import { CommentDto } from "@comments/dtos/comment.dto";
 
 @Injectable()
 export class BoardsService {
@@ -59,23 +71,65 @@ export class BoardsService {
     });
   }
 
-  async getBoard(id: string) {
-    // 댓글목록도 같이조회필요
-    return await this.boardRepository.findOneById(id);
+  async getBoard(id: string): Promise<GetBoardResponseDto> {
+    const board = await this.boardRepository.findOneById(id);
+    if (!board) {
+      throw new NotFoundException(BOARD_NOT_FOUND);
+    }
+
+    return {
+      id: board.id,
+      title: board.title,
+      content: board.content,
+      createdAt: board.createdAt,
+      author: board.user.nickname,
+      comments: board.comments.map((comment) => {
+        return {
+          id: comment.id,
+          content: comment.content,
+          author: comment.user.nickname,
+          createdAt: comment.createdAt,
+        } as CommentDto;
+      }),
+    } as GetBoardResponseDto;
   }
 
   async updateBoard(id: string, request: UpdateBoardRequestDto) {
-    // 작성자가 존재하는지 확인
+    const { password } = request;
 
-    // 게시글의 비밀번호가 일치한지 확인
+    // 게시글 존재여부 및 비밀번호 일치여부 확인
+    await this.confirmBoardPassword(id, password);
+
     // 게시글 업데이트
-    return await this.boardRepository.update({
+    await this.boardRepository.update({
       id: id,
       ...request,
     });
   }
-  async deleteBoard(id: string) {
-    // 게시글의 비밀번호가 일치한지 확인
+
+  async deleteBoard(request: DeleteBoardDto) {
+    const { id, password } = request;
+
+    // 게시글 존재여부 및 비밀번호 일치여부 확인
+    await this.confirmBoardPassword(id, password);
+
+    // 게시글 삭제
     await this.boardRepository.delete(id);
+  }
+
+  private async confirmBoardPassword(
+    id: string,
+    inputPassword: string,
+  ): Promise<void> {
+    // 게시글 존재유무확인
+    const board = await this.boardRepository.findOneById(id);
+
+    if (!board) {
+      throw new NotFoundException(BOARD_NOT_FOUND);
+    }
+
+    // 입력패스워드와 실제 패스워드 비교
+    if (board.password !== inputPassword)
+      throw new BadRequestException(NOT_CONFIRMED_BOARD_PASSWORD);
   }
 }

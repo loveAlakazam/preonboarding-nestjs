@@ -22,6 +22,8 @@ export class BoardEntity extends BaseEntity {
 
   @Column()
   content: string;
+  @Column()
+  password: string;
 
   // users:boards=1:N
   @ManyToOne(() => UserEntity, (user) => user.boards, {

@@ -13,11 +13,6 @@ export class BoardRepository {
 
   findAll(): Promise<BoardEntity[]> {
     return this.dataSource.find({
-      select: {
-        id: true,
-        title: true,
-        createdAt: true,
-      },
       relations: {
         user: true,
       },
@@ -27,15 +22,28 @@ export class BoardRepository {
   }
 
   findOneById(id: string): Promise<BoardEntity | null> {
-    return this.dataSource.findOneBy({ id });
+    return this.dataSource.findOne({
+      where: { id },
+      relations: {
+        user: true,
+        comments: true,
+      },
+      order: {
+        comments: {
+          // 작성날짜를 기준으로 오름차순 정렬
+          createdAt: "ASC",
+        },
+      },
+    });
   }
 
   create(newBoard: any) {
+    // todo: input-parameter: any -> dto class
     return this.dataSource.save(newBoard);
   }
 
   update(updatedBoard: any) {
-    // todo: input-parameter
+    // todo: input-parameter: any -> dto class
     // 일부데이터만 저장할 수 있도록 수정...
     return this.dataSource.save({ ...updatedBoard });
   }

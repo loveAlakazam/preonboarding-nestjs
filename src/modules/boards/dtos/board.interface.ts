@@ -1,4 +1,4 @@
-export interface BoardDto {
+export interface IBoard {
   // id
   id: string;
 

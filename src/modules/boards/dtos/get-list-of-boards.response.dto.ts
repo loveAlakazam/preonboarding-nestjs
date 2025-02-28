@@ -1,9 +1,9 @@
 import { Exclude, Expose } from "class-transformer";
-import { BoardDto } from "./board.dto.interface";
+import { IBoard } from "./board.interface";
 import { ApiProperty } from "@nestjs/swagger";
 
 export type GetListOfBoardsResponseDto = UnitOfList[];
-export class UnitOfList implements BoardDto {
+export class UnitOfList implements IBoard {
   @Expose()
   @ApiProperty({ description: "id", example: "1" })
   id: string;
