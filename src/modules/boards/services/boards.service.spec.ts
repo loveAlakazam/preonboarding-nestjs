@@ -169,8 +169,65 @@ describe("BoardsService", () => {
       // 수정쿼리 실행하지 않음을 확인
       expect(boardRepository.update).toHaveBeenCalledTimes(0);
     });
-    it("게시글 비밀번호가 올바르지않으면 BadRequestException 예외를 발생시킨다.", async () => {});
-    it("게시글 수정을 성공한다.", async () => {});
+    it("게시글 비밀번호가 올바르지않으면 BadRequestException 예외를 발생시킨다.", async () => {
+      const existedBoardId: string = sampleBoardData.id;
+      (boardRepository.findOneById as jest.Mock).mockReturnValue({
+        id: existedBoardId,
+        title: sampleBoardData.title,
+        content: sampleBoardData.content,
+        password: sampleBoardData.password,
+        user: {
+          id: sampleUserData.id,
+          nickname: sampleUserData.nickname,
+        },
+        comments: [],
+      });
+
+      const invalidRequest = {
+        password: "invalidPassword", // invalid
+        title: "게시글 제목 수정",
+      } as UpdateBoardRequestDto;
+
+      // 예외발생 확인
+      expect(
+        boardService.updateBoard(existedBoardId, invalidRequest),
+      ).rejects.toThrow(new BadRequestException(NOT_CONFIRMED_BOARD_PASSWORD));
+
+      // 조회쿼리만 실행됨을 확인
+      expect(boardRepository.findOneById).toHaveBeenCalledTimes(1);
+
+      // 수정쿼리 실행하지 않음을 확인
+      expect(boardRepository.update).toHaveBeenCalledTimes(0);
+    });
+    it("게시글 수정을 성공한다.", async () => {
+      const existedBoardId: string = sampleBoardData.id;
+      (boardRepository.findOneById as jest.Mock).mockReturnValue({
+        id: existedBoardId,
+        title: sampleBoardData.title,
+        content: sampleBoardData.content,
+        password: sampleBoardData.password,
+        user: {
+          id: sampleUserData.id,
+          nickname: sampleUserData.nickname,
+        },
+        comments: [],
+      });
+
+      const request = {
+        password: sampleBoardData.password,
+        title: "게시글 제목 수정",
+      } as UpdateBoardRequestDto;
+
+      await expect(
+        boardService.updateBoard(existedBoardId, request),
+      ).resolves.not.toThrow();
+
+      // 조회쿼리만 실행됨을 확인
+      expect(boardRepository.findOneById).toHaveBeenCalledTimes(1);
+
+      // 수정쿼리 실행 확인
+      expect(boardRepository.update).toHaveBeenCalledTimes(1);
+    });
   });
   describe("getBoard", () => {
     it("게시글 id가 존재하지 않으면 NotFoundException 예외를 발생시킨다.", async () => {
