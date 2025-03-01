@@ -49,7 +49,7 @@ export class BoardsController {
     description: "Success",
     type: [UnitOfList],
   })
-  async getListOfBoard() {
+  async getListOfBoards() {
     return await this.boardService.getListOfBoards();
   }
 
