@@ -21,8 +21,8 @@ export class UsersController {
     type: CreateNewUserResponseDto,
   })
   @ApiOperation({ summary: "create new user" })
-  async createNewUser(@Body() requestDto: CreateNewUserRequestDto) {
-    return await this.userService.createNewUser(requestDto);
+  async createNewUser(@Body() request: CreateNewUserRequestDto) {
+    return await this.userService.createNewUser(request);
   }
 
   @Post("sign-in")
@@ -32,7 +32,7 @@ export class UsersController {
     description: "Success",
   })
   @ApiOperation({ summary: "sign-in account" })
-  async signIn(@Body() requestDto: LoginUserRequestDto) {
-    return await this.userService.loginUser(requestDto);
+  async signIn(@Body() request: LoginUserRequestDto) {
+    return await this.userService.loginUser(request);
   }
 }

@@ -26,7 +26,10 @@ describe("UsersService", () => {
           provide: UserRepository,
           useValue: {
             findOneByNickname: jest.fn(),
-            create: jest.fn(),
+            create: jest.fn().mockResolvedValue({
+              id: "1",
+              ...sampleUserData,
+            }),
           },
         },
       ],
@@ -131,17 +134,18 @@ describe("UsersService", () => {
       const newUser = await userService.createNewUser(request);
 
       // 회원이 생성됐는지 확인
+      expect(newUser).toBeDefined();
+      expect(newUser.id).toBe("1");
+      expect(newUser.nickname).toBe(request.nickname);
+
+      // 올바르게 호출됐는지 확인
+      expect(userRepository.create).toHaveBeenCalledTimes(1);
       expect(userRepository.create).toHaveBeenCalledWith(
         expect.objectContaining({
           nickname: request.nickname,
+          password: request.password,
         }),
       );
-
-      // 반환되는 값이 예상한 값과 일치한지 확인
-      expect(newUser).toEqual({
-        id: "1",
-        nickname: request.nickname,
-      });
     });
   });
 });

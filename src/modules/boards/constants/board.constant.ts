@@ -1,0 +1,4 @@
+export const BOARD_AUTHOR_NICKNAME_MIN_LENGTH = 3;
+export const BOARD_TITLE_MIN_LENGTH = 1;
+export const BOARD_CONTENT_MIN_LENGTH = 1;
+export const BOARD_PASSWORD_MIN_LENGTH = 1;
