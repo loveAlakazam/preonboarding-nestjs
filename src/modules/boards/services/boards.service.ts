@@ -21,6 +21,7 @@ import {
 import { DeleteBoardDto } from "../dtos/delete-board.request.dto";
 import { GetBoardResponseDto } from "../dtos/get-board.response.dto";
 import { CommentDto } from "@comments/dtos/comment.dto";
+import { UpdateBoardResponseDto } from "../dtos/update-board.response.dto";
 
 @Injectable()
 export class BoardsService {
@@ -100,11 +101,21 @@ export class BoardsService {
     // 게시글 존재여부 및 비밀번호 일치여부 확인
     await this.confirmBoardPassword(id, password);
 
+    // 원본 게시글 데이터 확인
+    const originBoard = await this.getBoard(id);
+
     // 게시글 업데이트
-    await this.boardRepository.update({
+    const updatedBoard = await this.boardRepository.update({
       id: id,
       ...request,
     });
+
+    return {
+      id: originBoard.id,
+      title: updatedBoard.title ?? originBoard.title,
+      content: updatedBoard.content ?? originBoard.content,
+      author: originBoard.author,
+    } as UpdateBoardResponseDto;
   }
 
   async deleteBoard(request: DeleteBoardDto) {

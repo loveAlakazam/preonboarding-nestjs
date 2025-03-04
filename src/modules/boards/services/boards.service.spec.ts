@@ -5,7 +5,6 @@ import { UserRepository } from "@users/repositories/users.repository";
 import { CreateNewBoardRequestDto } from "../dtos/create-new-board.request.dto";
 import { NOT_FOUND_USER } from "@src/modules/users/errors/users.error-message";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { GetListOfBoardsResponseDto } from "../dtos/get-list-of-boards.response.dto";
 import {
   BOARD_NOT_FOUND,
   NOT_CONFIRMED_BOARD_PASSWORD,
@@ -201,6 +200,9 @@ describe("BoardsService", () => {
     });
     it("게시글 수정을 성공한다.", async () => {
       const existedBoardId: string = sampleBoardData.id;
+      const updatedBoardTitle: string = "게시글 제목 수정";
+
+      // Mock 설정
       (boardRepository.findOneById as jest.Mock).mockReturnValue({
         id: existedBoardId,
         title: sampleBoardData.title,
@@ -212,21 +214,36 @@ describe("BoardsService", () => {
         },
         comments: [],
       });
+      (boardRepository.update as jest.Mock).mockResolvedValue({
+        id: existedBoardId,
+        title: updatedBoardTitle, // 수정완료
+        content: sampleBoardData.content,
+        password: sampleBoardData.password,
+        user: {
+          id: sampleUserData.id,
+          nickname: sampleUserData.nickname,
+        },
+        comments: [],
+      });
 
       const request = {
         password: sampleBoardData.password,
-        title: "게시글 제목 수정",
+        title: updatedBoardTitle,
       } as UpdateBoardRequestDto;
 
-      await expect(
-        boardService.updateBoard(existedBoardId, request),
-      ).resolves.not.toThrow();
+      const board = await boardService.updateBoard(existedBoardId, request);
 
       // 조회쿼리만 실행됨을 확인
-      expect(boardRepository.findOneById).toHaveBeenCalledTimes(1);
+      expect(boardService.getBoard).toHaveBeenCalledTimes(1);
+      expect(boardRepository.findOneById).toHaveBeenCalledTimes(2);
 
       // 수정쿼리 실행 확인
       expect(boardRepository.update).toHaveBeenCalledTimes(1);
+
+      // 수정이후 게시글 데이터를 확인한다.
+      expect(board).toBeDefined();
+      expect(board.id).toBe(existedBoardId);
+      expect(board.title).toBe(updatedBoardTitle);
     });
   });
   describe("getBoard", () => {

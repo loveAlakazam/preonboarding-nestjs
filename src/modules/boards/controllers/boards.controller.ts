@@ -71,7 +71,7 @@ export class BoardsController {
   }
 
   @Patch(":id")
-  @HttpCode(204)
+  @HttpCode(200)
   @ApiOperation({ summary: "update information of target board" })
   @ApiParam({
     name: "id",

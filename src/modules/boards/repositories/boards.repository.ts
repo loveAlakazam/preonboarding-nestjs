@@ -23,7 +23,7 @@ export class BoardRepository {
 
   findOneById(id: string): Promise<BoardEntity | null> {
     return this.dataSource.findOne({
-      where: { id },
+      where: { id , },
       relations: {
         user: true,
         comments: true,
