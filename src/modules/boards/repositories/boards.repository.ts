@@ -2,7 +2,6 @@ import { Injectable } from "@nestjs/common";
 import { InjectRepository } from "@nestjs/typeorm";
 import { BoardEntity } from "../entity/boards.entity";
 import { Repository } from "typeorm";
-import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
 
 @Injectable()
 export class BoardRepository {
@@ -23,16 +22,9 @@ export class BoardRepository {
 
   findOneById(id: string): Promise<BoardEntity | null> {
     return this.dataSource.findOne({
-      where: { id , },
+      where: { id },
       relations: {
         user: true,
-        comments: true,
-      },
-      order: {
-        comments: {
-          // 작성날짜를 기준으로 오름차순 정렬
-          createdAt: "ASC",
-        },
       },
     });
   }

@@ -46,7 +46,7 @@ import { CommentEntity } from "@comments/entity/comments.entity";
     BoardsModule,
     CommentsModule,
   ],
-  controllers: [AppController, CommentsController],
+  controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule implements OnModuleInit {
