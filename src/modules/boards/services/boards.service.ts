@@ -110,7 +110,10 @@ export class BoardsService {
     await this.confirmBoardPassword(id, password);
 
     // 원본 게시글 데이터 확인
-    const originBoard = await this.getBoard(id);
+    const originBoard = await this.boardRepository.findOneById(id);
+    if (!originBoard) {
+      throw new NotFoundException(NOT_FOUND_BOARD);
+    }
 
     // 게시글 업데이트
     const updatedBoard = await this.boardRepository.update({
@@ -122,7 +125,7 @@ export class BoardsService {
       id: originBoard.id,
       title: updatedBoard.title ?? originBoard.title,
       content: updatedBoard.content ?? originBoard.content,
-      author: originBoard.author,
+      author: originBoard.user.nickname,
     } as UpdateBoardResponseDto;
   }
 
