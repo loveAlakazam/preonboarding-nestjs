@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { UsersController } from "./users.controller";
+import { UsersController } from "@users/controllers/users.controller";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { UsersService } from "@users/services/users.service";
 import { CreateNewUserRequestDto } from "@users/dto/create-new-user-request.dto";
@@ -15,9 +15,9 @@ import {
   ALLOW_ALPHABET_AND_NUMBER,
   PASSWORD_CONTAINS_NICKNAME,
   PASSWORD_NOT_EQUALS_TO_CONFIRMED_PASSWORD,
-} from "../errors/users.error-message";
+} from "@users/errors/users.error-message";
 import * as request from "supertest";
-import { LoginUserRequestDto } from "../dto/login-user.request.dto";
+import { LoginUserRequestDto } from "@users/dto/login-user.request.dto";
 
 describe("UsersController (request validation)", () => {
   let app: INestApplication;
