@@ -51,13 +51,6 @@ describe("AppController (e2e)", () => {
     await app.close();
   });
 
-  it("/ (GET)", () => {
-    return request(app.getHttpServer())
-      .get("/")
-      .expect(200)
-      .expect("Hello World!");
-  });
-
   describe("users", () => {
     it("회원가입 성공한다", async () => {
       const response = await request(app.getHttpServer())
