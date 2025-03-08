@@ -240,9 +240,57 @@ describe("CommentsService", () => {
     });
   });
   describe("deleteComment", () => {
-    it("댓글 요청 작성자 id에 해당되는 유저데이터가 존재하지 않으면, NotFoundException 예외를 발생시킨다.", async () => {});
-    it("댓글 요청 작성자 id와 실제 댓글 작성자 id가 일치하지 않으면, BadRequestException 예외를 발생시킨다.", async () => {});
-    it("댓글id에 해당되는 댓글데이터가 존재하지 않으면, NotFoundException 예외를 발생시킨다.", async () => {});
-    it("댓글 삭제를 성공한다.", async () => {});
+    it("댓글 요청 작성자 id에 해당되는 유저데이터가 존재하지 않으면, NotFoundException 예외를 발생시킨다.", async () => {
+      (userRepository.findOneById as jest.Mock).mockReturnValue(null);
+      const invalidRequest = {
+        id: commentId,
+        userId: invalidUserId, // invalid
+      };
+
+      expect(commentService.deleteComment(invalidRequest)).rejects.toThrow(
+        new NotFoundException(NOT_FOUND_USER),
+      );
+    });
+    it("댓글 요청 작성자 id와 실제 댓글 작성자 id가 일치하지 않으면, BadRequestException 예외를 발생시킨다.", async () => {
+      (userRepository.findOneById as jest.Mock).mockReturnValue(sampleUser);
+
+      const invalidRequest = {
+        id: commentId,
+        userId: invalidUserId, // invalid
+      };
+      expect(commentService.deleteComment(invalidRequest)).rejects.toThrow(
+        new BadRequestException(INVALID_COMMENT_AUTHOR),
+      );
+    });
+    it("댓글id에 해당되는 댓글데이터가 존재하지 않으면, NotFoundException 예외를 발생시킨다.", async () => {
+      (userRepository.findOneById as jest.Mock).mockReturnValue(sampleUser);
+      (commentRepository.findOneById as jest.Mock).mockReturnValue(null);
+      const invalidRequest = {
+        id: invalidCommentId, //  invalid
+        userId: userId,
+      };
+
+      expect(commentService.deleteComment(invalidRequest)).rejects.toThrow(
+        new BadRequestException(NOT_FOUND_COMMENT),
+      );
+    });
+    it("댓글 삭제를 성공한다.", async () => {
+      (userRepository.findOneById as jest.Mock).mockReturnValue(sampleUser);
+      (commentRepository.findOneById as jest.Mock).mockReturnValue(
+        sampleComment,
+      );
+
+      const request = {
+        id: commentId,
+        userId: userId,
+      };
+
+      await expect(
+        commentService.deleteComment(request),
+      ).resolves.not.toThrow();
+
+      // 호출확인
+      expect(commentRepository.delete).toHaveBeenCalledTimes(1);
+    });
   });
 });
