@@ -1,7 +1,10 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { BoardsController } from "./boards.controller";
+import { BoardsController } from "@boards/controllers/boards.controller";
 import { INestApplication, ValidationPipe } from "@nestjs/common";
 import { BoardsService } from "@boards/services/boards.service";
+import { BoardRepository } from "@boards/repositories/boards.repository";
+import { UserRepository } from "@users/repositories/users.repository";
+import { CommentRepository } from "@comments/repositories/comments.repository";
 import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
 import {
   MINLENGTH,
@@ -15,11 +18,9 @@ import {
   BOARD_TITLE_MIN_LENGTH,
 } from "@src/modules/boards/constants/board.constant";
 import {
-  BOARD_NOT_FOUND,
+  NOT_FOUND_BOARD,
   NOT_CONFIRMED_BOARD_PASSWORD,
 } from "@boards/errors/board.error-message";
-import { BoardRepository } from "@boards/repositories/boards.repository";
-import { UserRepository } from "@users/repositories/users.repository";
 
 describe("BoardsController", () => {
   let app: INestApplication;
@@ -47,6 +48,10 @@ describe("BoardsController", () => {
           useValue: {
             findOneByNickname: jest.fn(),
           },
+        },
+        {
+          provide: CommentRepository,
+          useValue: {},
         },
       ],
     }).compile();
@@ -212,7 +217,7 @@ describe("BoardsController", () => {
         .send();
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toContain(BOARD_NOT_FOUND);
+      expect(response.body.message).toContain(NOT_FOUND_BOARD);
     });
   });
   describe("updateBoard", () => {
@@ -225,7 +230,7 @@ describe("BoardsController", () => {
         });
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toContain(BOARD_NOT_FOUND);
+      expect(response.body.message).toContain(NOT_FOUND_BOARD);
     });
     it("게시글의 비밀번호가 올바르지 않은면, BadRequestException 예외가 발생한다", async () => {
       const boardId = "1";
@@ -256,7 +261,7 @@ describe("BoardsController", () => {
         });
 
       expect(response.status).toBe(404);
-      expect(response.body.message).toContain(BOARD_NOT_FOUND);
+      expect(response.body.message).toContain(NOT_FOUND_BOARD);
     });
     it("게시글의 비밀번호가 올바르지 않은면, BadRequestException 예외가 발생한다", async () => {
       const boardId = "1";

@@ -1,21 +1,23 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { BoardsService } from "./boards.service";
+import { BoardsService } from "@boards/services/boards.service";
 import { BoardRepository } from "@boards/repositories/boards.repository";
 import { UserRepository } from "@users/repositories/users.repository";
-import { CreateNewBoardRequestDto } from "../dtos/create-new-board.request.dto";
-import { NOT_FOUND_USER } from "@src/modules/users/errors/users.error-message";
+import { NOT_FOUND_USER } from "@users/errors/users.error-message";
+import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
+import { CommentRepository } from "@comments/repositories/comments.repository";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import {
-  BOARD_NOT_FOUND,
+  NOT_FOUND_BOARD,
   NOT_CONFIRMED_BOARD_PASSWORD,
-} from "../errors/board.error-message";
-import { DeleteBoardDto } from "../dtos/delete-board.request.dto";
-import { UpdateBoardRequestDto } from "../dtos/update-board.request.dto";
+} from "@boards/errors/board.error-message";
+import { DeleteBoardDto } from "@boards/dtos/delete-board.request.dto";
+import { UpdateBoardRequestDto } from "@boards/dtos/update-board.request.dto";
 
 describe("BoardsService", () => {
   let boardService: BoardsService;
   let boardRepository: BoardRepository;
   let userRepository: UserRepository;
+  let commentRepository: CommentRepository;
 
   const sampleUserData = {
     id: "1",
@@ -65,12 +67,19 @@ describe("BoardsService", () => {
             findOneByNickname: jest.fn(),
           },
         },
+        {
+          provide: CommentRepository,
+          useValue: {
+            findCommentsByBoardId: jest.fn(),
+          },
+        },
       ],
     }).compile();
 
     boardService = module.get<BoardsService>(BoardsService);
     boardRepository = module.get<BoardRepository>(BoardRepository);
     userRepository = module.get<UserRepository>(UserRepository);
+    commentRepository = module.get<CommentRepository>(CommentRepository);
   });
 
   afterEach(() => {
@@ -88,7 +97,7 @@ describe("BoardsService", () => {
 
       // 예외발생 확인
       await expect(boardService.deleteBoard(invalidRequest)).rejects.toThrow(
-        new NotFoundException(BOARD_NOT_FOUND),
+        new NotFoundException(NOT_FOUND_BOARD),
       );
 
       // 삭제쿼리 실행하지 않음을 확인
@@ -163,7 +172,7 @@ describe("BoardsService", () => {
       // 예외발생 확인
       await expect(
         boardService.updateBoard(notFoundBoardId, invalidRequest),
-      ).rejects.toThrow(new NotFoundException(BOARD_NOT_FOUND));
+      ).rejects.toThrow(new NotFoundException(NOT_FOUND_BOARD));
 
       // 수정쿼리 실행하지 않음을 확인
       expect(boardRepository.update).toHaveBeenCalledTimes(0);
@@ -212,8 +221,8 @@ describe("BoardsService", () => {
           id: sampleUserData.id,
           nickname: sampleUserData.nickname,
         },
-        comments: [],
       });
+
       (boardRepository.update as jest.Mock).mockResolvedValue({
         id: existedBoardId,
         title: updatedBoardTitle, // 수정완료
@@ -234,7 +243,6 @@ describe("BoardsService", () => {
       const board = await boardService.updateBoard(existedBoardId, request);
 
       // 조회쿼리만 실행됨을 확인
-      expect(boardService.getBoard).toHaveBeenCalledTimes(1);
       expect(boardRepository.findOneById).toHaveBeenCalledTimes(2);
 
       // 수정쿼리 실행 확인
@@ -251,7 +259,7 @@ describe("BoardsService", () => {
       (boardRepository.findOneById as jest.Mock).mockReturnValue(null);
 
       await expect(boardService.getBoard(notFoundBoardId)).rejects.toThrow(
-        new NotFoundException(BOARD_NOT_FOUND),
+        new NotFoundException(NOT_FOUND_BOARD),
       );
     });
     it("게시글 조회를 성공한다", async () => {
@@ -265,10 +273,14 @@ describe("BoardsService", () => {
           id: sampleUserData.id,
           nickname: sampleUserData.nickname,
         },
-        comments: [],
       });
+      (commentRepository.findCommentsByBoardId as jest.Mock).mockReturnValue(
+        [],
+      );
 
       const board = await boardService.getBoard(existedBoardId);
+      expect(boardRepository.findOneById).toHaveBeenCalledTimes(1);
+      expect(commentRepository.findCommentsByBoardId).toHaveBeenCalledTimes(1);
 
       // 실제결과 확인
       expect(board).toBeDefined();
