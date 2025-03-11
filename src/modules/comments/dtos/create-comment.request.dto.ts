@@ -22,9 +22,10 @@ export class CreateNewCommentRequestDto {
 
   // 댓글내용
   @IsOptional()
+  @Transform(({ value }) => (value?.trim() ? value : DEFAULT_COMMENT_CONTENT))
   @ApiProperty({
     description: "댓글 내용",
     example: "댓글 내용을 입력해주세요.",
   })
-  content: string;
+  content?: string;
 }

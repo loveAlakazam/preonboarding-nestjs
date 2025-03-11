@@ -10,8 +10,12 @@ import {
   LOGIN_FAILED,
 } from "@users/errors/users.error-message";
 import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
-import { BoardsService } from "@src/modules/boards/services/boards.service";
-import { BoardRepository } from "@src/modules/boards/repositories/boards.repository";
+import { BoardsService } from "@boards/services/boards.service";
+import { BoardRepository } from "@boards/repositories/boards.repository";
+import { CommentsService } from "@comments/services/comments.service";
+import { CommentRepository } from "@comments/repositories/comments.repository";
+import { CreateNewCommentRequestDto } from "@comments/dtos/create-comment.request.dto";
+import { DEFAULT_COMMENT_CONTENT } from "@comments/constants/comment.constant";
 
 describe("AppController (e2e)", () => {
   let app: INestApplication<App>;
@@ -19,12 +23,17 @@ describe("AppController (e2e)", () => {
   let userRepository: UserRepository;
   let boardService: BoardsService;
   let boardRepository: BoardRepository;
+  let commentService: CommentsService;
+  let commentRepository: CommentRepository;
 
+  let userId; // 유저아이디
   const testUser = {
     nickname: "testUser",
     password: "testPassword1234",
   };
   let boardId; // 게시글 생성
+  let boardIdForComment; // 코멘트 테스트를 위한 boardId
+  let commentId; // 댓글 아이디
 
   beforeAll(async () => {
     const moduleFixture: TestingModule = await Test.createTestingModule({
@@ -39,10 +48,16 @@ describe("AppController (e2e)", () => {
 
     boardRepository = moduleFixture.get<BoardRepository>(BoardRepository);
     boardService = moduleFixture.get<BoardsService>(BoardsService);
+    commentRepository = moduleFixture.get<CommentRepository>(CommentRepository);
+    commentService = moduleFixture.get<CommentsService>(CommentsService);
   });
 
   afterAll(async () => {
+    // 댓글 삭제
+    await commentRepository.remove(commentId);
+
     // 게시글 테스트데이터 삭제
+    await boardRepository.remove(boardIdForComment);
     await boardRepository.remove(boardId);
 
     // user 테스트데이터 삭제
@@ -51,6 +66,9 @@ describe("AppController (e2e)", () => {
     await app.close();
   });
 
+  /**
+   * Users
+   **/
   describe("users", () => {
     it("회원가입 성공한다", async () => {
       const response = await request(app.getHttpServer())
@@ -63,6 +81,7 @@ describe("AppController (e2e)", () => {
         .expect(201);
 
       expect(response.body).toHaveProperty("nickname", testUser.nickname);
+      userId = response.body.id;
     });
     it("로그인을 성공한다", async () => {
       await request(app.getHttpServer())
@@ -97,6 +116,10 @@ describe("AppController (e2e)", () => {
       expect(response.body.message).toContain(ALREADY_EXIST_USER);
     });
   });
+
+  /**
+   * Boards
+   **/
   describe("boards", () => {
     const nickname = testUser.nickname;
     const title = "e2e 테스트 제목";
@@ -176,6 +199,89 @@ describe("AppController (e2e)", () => {
           password: password,
         })
         .expect(204);
+    });
+  });
+  /**
+   * Comments
+   */
+  describe("comments", () => {
+    const nickname = testUser.nickname;
+    const title = "댓글 e2e 테스트 게시글 제목";
+    const boardContent = "댓글 e2e 테스트 게시글 내용";
+    const password = "boardCommentPassword1234";
+    const commentContent = "e2e테스트를 위한 댓글 내용입니다"; // 수정테스트에 사용
+
+    // 게시글 생성
+    it("게시글 생성에 성공한다", async () => {
+      const requestDto = {
+        nickname: nickname,
+        title: title,
+        content: boardContent,
+        password: password,
+      } as CreateNewBoardRequestDto;
+
+      const response = await request(app.getHttpServer())
+        .post("/boards")
+        .send(requestDto)
+        .expect(201);
+
+      // 응답데이터 검증
+      expect(response).toBeDefined();
+      expect(response.body.author).toBe(nickname);
+      expect(response.body.title).toBe(title);
+      expect(response.body.content).toBe(boardContent);
+
+      // 생성된 게시글의 id를 boardIdForComment 변수에 할당한다
+      boardIdForComment = response.body.id;
+      expect(boardIdForComment).toBeTruthy();
+    });
+    // 댓글 생성
+    it("댓글 생성에 성공한다", async () => {
+      const requestDto = {
+        boardId: boardIdForComment,
+        userId: userId,
+        content: undefined,
+      } as CreateNewCommentRequestDto;
+
+      const response = await request(app.getHttpServer())
+        .post("/comments/")
+        .send(requestDto)
+        .expect(201);
+
+      // 응답데이터 검증
+      expect(response).toBeDefined();
+      expect(response.body.author).toBe(nickname);
+      expect(response.body.content).toBe(DEFAULT_COMMENT_CONTENT);
+
+      // 생성된 댓글 아이디를 commentId에 할당
+      commentId = response.body.id;
+      expect(commentId).toBeTruthy();
+    });
+    it("게시글내 댓글 생성후, 게시글에 댓글개수는 1 개이다", async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/boards/${boardIdForComment}`)
+        .send()
+        .expect(200);
+
+      expect(response).toBeDefined();
+
+      // 댓글 개수 확인
+      expect(response.body.comments.length).toBe(1);
+    });
+    // 댓글 수정
+    it("댓글내용 수정에 성공한다", async () => {});
+    // 댓글 삭제
+    it("댓글내용 삭제에 성공한다", async () => {});
+    it("게시글내 댓글 삭제후, 게시글에 댓글개수는 0 개이다.", async () => {
+      const response = await request(app.getHttpServer())
+        .get(`/boards/${boardIdForComment}`)
+        .send()
+        .expect(200);
+
+      expect(response).toBeDefined();
+
+      // 댓글 개수 확인
+      expect(response.body.comments.length).toBe(0);
     });
   });
 });
