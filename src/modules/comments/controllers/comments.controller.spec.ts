@@ -10,6 +10,8 @@ import {
   SHOULD_BE_EXIST,
   SHOULD_BE_STRING,
 } from "@src/commons/errors/commons.error-message";
+import { DEFAULT_COMMENT_CONTENT } from "@comments/constants/comment.constant";
+import { UpdateCommentRequestDto } from "@comments/dtos/update-comment.request.dto";
 
 describe("CommentsController", () => {
   let app: INestApplication;
@@ -69,6 +71,7 @@ describe("CommentsController", () => {
   });
 
   describe("CommentController", () => {
+    const commentId = "1";
     /**
      * 댓글 생성
      */
@@ -137,10 +140,82 @@ describe("CommentsController", () => {
     /**
      * 댓글 수정
      */
-    describe("updateComment", () => {});
+    describe("updateComment", () => {
+      describe("userId", () => {
+        it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
+          const invalidRequest = {
+            userId: undefined, // invalid
+            content: "",
+          } as unknown as UpdateCommentRequestDto;
+
+          const response = await request(app.getHttpServer())
+            .patch(`/comments/${commentId}`)
+            .send(invalidRequest);
+
+          expect(response.status).toBe(400);
+          expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
+        });
+        it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
+          const invalidRequest = {
+            userId: 1, // invalid
+            content: "",
+          } as unknown as UpdateCommentRequestDto;
+
+          const response = await request(app.getHttpServer())
+            .patch(`/comments/${commentId}`)
+            .send(invalidRequest);
+
+          expect(response.status).toBe(400);
+          expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
+        });
+      });
+      describe("content", () => {
+        it(`content 값이 비어있더라도 유효성검사에서 통과된다.`, async () => {
+          const updateRequest = {
+            userId: "1",
+            content: "",
+          } as UpdateCommentRequestDto;
+
+          const response = await request(app.getHttpServer())
+            .patch(`/comments/${commentId}`)
+            .send(updateRequest);
+
+          expect(response.status).not.toBe(400);
+        });
+      });
+    });
     /**
      * 댓글 삭제
      */
-    describe("updateComment", () => {});
+    describe("deleteComment", () => {
+      describe("userId", () => {
+        it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
+          const invalidRequest = {
+            userId: undefined, // invalid
+            content: "",
+          } as unknown as UpdateCommentRequestDto;
+
+          const response = await request(app.getHttpServer())
+            .delete(`/comments/${commentId}`)
+            .send(invalidRequest);
+
+          expect(response.status).toBe(400);
+          expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
+        });
+        it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
+          const invalidRequest = {
+            userId: 1, // invalid
+            content: "",
+          } as unknown as UpdateCommentRequestDto;
+
+          const response = await request(app.getHttpServer())
+            .delete(`/comments/${commentId}`)
+            .send(invalidRequest);
+
+          expect(response.status).toBe(400);
+          expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
+        });
+      });
+    });
   });
 });
