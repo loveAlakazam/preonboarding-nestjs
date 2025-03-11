@@ -209,7 +209,7 @@ describe("AppController (e2e)", () => {
     const title = "댓글 e2e 테스트 게시글 제목";
     const boardContent = "댓글 e2e 테스트 게시글 내용";
     const password = "boardCommentPassword1234";
-    const commentContent = "e2e테스트를 위한 댓글 내용입니다"; // 수정테스트에 사용
+    const updatedCommentContent = "e2e테스트를 위한 댓글 내용입니다"; // 수정테스트에 사용
 
     // 게시글 생성
     it("게시글 생성에 성공한다", async () => {
@@ -269,9 +269,26 @@ describe("AppController (e2e)", () => {
       expect(response.body.comments.length).toBe(1);
     });
     // 댓글 수정
-    it("댓글내용 수정에 성공한다", async () => {});
+    it("댓글내용 수정에 성공한다", async () => {
+      const response = await request(app.getHttpServer())
+        .patch(`/comments/${commentId}`)
+        .send({
+          userId: userId,
+          content: updatedCommentContent,
+        })
+        .expect(200);
+
+      expect(response.body.content).toBe(updatedCommentContent);
+    });
     // 댓글 삭제
-    it("댓글내용 삭제에 성공한다", async () => {});
+    it("댓글내용 삭제(soft-delete)에 성공한다", async () => {
+      await request(app.getHttpServer())
+        .delete(`/comments/${commentId}`)
+        .send({
+          userId: userId,
+        })
+        .expect(204);
+    });
     it("게시글내 댓글 삭제후, 게시글에 댓글개수는 0 개이다.", async () => {
       const response = await request(app.getHttpServer())
         .get(`/boards/${boardIdForComment}`)
