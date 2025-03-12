@@ -103,7 +103,7 @@ describe("UsersService", () => {
       // 로그인 요청 dto
       const request: LoginUserRequestDto = { ...sampleUserData };
 
-      // 계정일치시 리턴타입없이 종료
+      // 토큰생성 오류발생하여 UnauthorizedException 발생확인
       await expect(userService.loginUser(request)).rejects.toThrow(
         new UnauthorizedException(TOKEN_FAILED),
       );
@@ -122,8 +122,9 @@ describe("UsersService", () => {
       // 로그인 요청 dto
       const request: LoginUserRequestDto = { ...sampleUserData };
 
-      // 계정일치시 리턴타입없이 종료
-      await expect(userService.loginUser(request)).resolves.not.toThrow();
+      // 토큰생성확인
+      const response = await userService.loginUser(request);
+      expect(response).toBeDefined();
     });
   });
 

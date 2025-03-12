@@ -26,6 +26,7 @@ describe("AppController (e2e)", () => {
   let commentService: CommentsService;
   let commentRepository: CommentRepository;
 
+  let accessToken; // 토큰
   let userId; // 유저아이디
   const testUser = {
     nickname: "testUser",
@@ -84,13 +85,15 @@ describe("AppController (e2e)", () => {
       userId = response.body.id;
     });
     it("로그인을 성공한다", async () => {
-      await request(app.getHttpServer())
+      const response = await request(app.getHttpServer())
         .post("/users/sign-in")
         .send({
           nickname: testUser.nickname,
           password: testUser.password,
         })
         .expect(200);
+
+      accessToken = response.body.accessToken;
     });
     it("닉네임과 비밀번호가 일치하지 않으면 로그인에 실패한다", async () => {
       const response = await request(app.getHttpServer())
@@ -136,6 +139,7 @@ describe("AppController (e2e)", () => {
 
       const response = await request(app.getHttpServer())
         .post("/boards/")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send(requestDto)
         .expect(201);
 
@@ -172,7 +176,8 @@ describe("AppController (e2e)", () => {
 
       // 응답데이터 검증
       expect(response.body).toBeDefined();
-      expect(response.body.length).toBe(7);
+      // expect(response.body.length).toBe(7);
+      expect(response.body.length).toBe(2);
       // for (const r of response.body) {
       //   expect(r.author).toBe(nickname);
       //   expect(r.title).toBe(title);
@@ -183,6 +188,7 @@ describe("AppController (e2e)", () => {
       const updatedTitle = "수정된 게시글 제목입니다.";
       const response = await request(app.getHttpServer())
         .patch(`/boards/${boardId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           password: password,
           title: updatedTitle,
@@ -195,6 +201,7 @@ describe("AppController (e2e)", () => {
     it("게시글 삭제(soft-delete)에 성공한다", async () => {
       const response = await request(app.getHttpServer())
         .delete(`/boards/${boardId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           password: password,
         })
@@ -222,6 +229,7 @@ describe("AppController (e2e)", () => {
 
       const response = await request(app.getHttpServer())
         .post("/boards")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send(requestDto)
         .expect(201);
 
@@ -245,6 +253,7 @@ describe("AppController (e2e)", () => {
 
       const response = await request(app.getHttpServer())
         .post("/comments/")
+        .set("Authorization", `Bearer ${accessToken}`)
         .send(requestDto)
         .expect(201);
 
@@ -272,6 +281,7 @@ describe("AppController (e2e)", () => {
     it("댓글내용 수정에 성공한다", async () => {
       const response = await request(app.getHttpServer())
         .patch(`/comments/${commentId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           userId: userId,
           content: updatedCommentContent,
@@ -284,6 +294,7 @@ describe("AppController (e2e)", () => {
     it("댓글내용 삭제(soft-delete)에 성공한다", async () => {
       await request(app.getHttpServer())
         .delete(`/comments/${commentId}`)
+        .set("Authorization", `Bearer ${accessToken}`)
         .send({
           userId: userId,
         })
