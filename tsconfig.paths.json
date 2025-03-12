@@ -4,6 +4,7 @@
     "resolveJsonModule": true,
     "paths": {
       "@src/*": ["./src/*"],
+      "@auth/*": ["./src/auth/*"],
       "@users/*": ["./src/modules/users/*"],
       "@boards/*": ["./src/modules/boards/*"],
       "@comments/*": ["./src/modules/comments/*"]
