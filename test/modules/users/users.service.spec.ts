@@ -1,13 +1,13 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { UsersService } from "./users.service";
-import { UserRepository } from "../repositories/users.repository";
-import { CreateNewUserRequestDto } from "../dto/create-new-user-request.dto";
+import { UsersService } from "@users/services/users.service";
+import { UserRepository } from "@users/repositories/users.repository";
+import { CreateNewUserRequestDto } from "@users/dto/create-new-user-request.dto";
 import { BadRequestException, HttpException } from "@nestjs/common";
 import {
   ALREADY_EXIST_USER,
   LOGIN_FAILED,
-} from "../errors/users.error-message";
-import { LoginUserRequestDto } from "../dto/login-user.request.dto";
+} from "@users/errors/users.error-message";
+import { LoginUserRequestDto } from "@users/dto/login-user.request.dto";
 
 describe("UsersService", () => {
   let userService: UsersService;

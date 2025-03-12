@@ -2,6 +2,7 @@ import { Column, Entity, ManyToOne, PrimaryGeneratedColumn } from "typeorm";
 import { BaseEntity } from "@src/commons/entity/base.entity";
 import { BoardEntity } from "@boards/entity/boards.entity";
 import { UserEntity } from "@users/entity/users.entity";
+import { DEFAULT_COMMENT_CONTENT } from "@comments/constants/comment.constant";
 
 @Entity({
   name: "comments",
@@ -11,7 +12,7 @@ export class CommentEntity extends BaseEntity {
   @PrimaryGeneratedColumn("increment", { type: "bigint" })
   id: string;
 
-  @Column()
+  @Column({ default: DEFAULT_COMMENT_CONTENT })
   content: string;
 
   // users:comments=1:N

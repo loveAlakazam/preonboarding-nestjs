@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  forwardRef,
   Inject,
   Injectable,
   NotFoundException,
@@ -15,13 +16,14 @@ import {
   UnitOfList,
 } from "@boards/dtos/get-list-of-boards.response.dto";
 import {
-  BOARD_NOT_FOUND,
+  NOT_FOUND_BOARD,
   NOT_CONFIRMED_BOARD_PASSWORD,
 } from "@boards/errors/board.error-message";
 import { DeleteBoardDto } from "../dtos/delete-board.request.dto";
 import { GetBoardResponseDto } from "../dtos/get-board.response.dto";
 import { CommentDto } from "@comments/dtos/comment.dto";
-import { UpdateBoardResponseDto } from "../dtos/update-board.response.dto";
+import { UpdateBoardResponseDto } from "@boards/dtos/update-board.response.dto";
+import { CommentRepository } from "@comments/repositories/comments.repository";
 
 @Injectable()
 export class BoardsService {
@@ -30,12 +32,14 @@ export class BoardsService {
     private boardRepository: BoardRepository,
     @Inject()
     private userRepository: UserRepository,
+    @Inject()
+    private commentRepository: CommentRepository,
   ) {}
 
   async createNewBoard(
-    request: CreateNewBoardRequestDto,
+    requestDto: CreateNewBoardRequestDto,
   ): Promise<CreateNewBoardResponseDto> {
-    const { nickname, title, content, password } = request;
+    const { nickname, title, content, password } = requestDto;
 
     // nickname의 유저가 존재하는지 확인
     const author = await this.userRepository.findOneByNickname(nickname);
@@ -73,10 +77,14 @@ export class BoardsService {
   }
 
   async getBoard(id: string): Promise<GetBoardResponseDto> {
+    // 게시글 정보를 구한다 (유저정보 포함)
     const board = await this.boardRepository.findOneById(id);
     if (!board) {
-      throw new NotFoundException(BOARD_NOT_FOUND);
+      throw new NotFoundException(NOT_FOUND_BOARD);
     }
+
+    // 댓글 정보를 구한다
+    const comments = await this.commentRepository.findCommentsByBoardId(id);
 
     return {
       id: board.id,
@@ -84,7 +92,7 @@ export class BoardsService {
       content: board.content,
       createdAt: board.createdAt,
       author: board.user.nickname,
-      comments: board.comments.map((comment) => {
+      comments: comments.map((comment) => {
         return {
           id: comment.id,
           content: comment.content,
@@ -95,31 +103,34 @@ export class BoardsService {
     } as GetBoardResponseDto;
   }
 
-  async updateBoard(id: string, request: UpdateBoardRequestDto) {
-    const { password } = request;
+  async updateBoard(id: string, requestDto: UpdateBoardRequestDto) {
+    const { password } = requestDto;
 
     // 게시글 존재여부 및 비밀번호 일치여부 확인
     await this.confirmBoardPassword(id, password);
 
     // 원본 게시글 데이터 확인
-    const originBoard = await this.getBoard(id);
+    const originBoard = await this.boardRepository.findOneById(id);
+    if (!originBoard) {
+      throw new NotFoundException(NOT_FOUND_BOARD);
+    }
 
     // 게시글 업데이트
     const updatedBoard = await this.boardRepository.update({
       id: id,
-      ...request,
+      ...requestDto,
     });
 
     return {
       id: originBoard.id,
       title: updatedBoard.title ?? originBoard.title,
       content: updatedBoard.content ?? originBoard.content,
-      author: originBoard.author,
+      author: originBoard.user.nickname,
     } as UpdateBoardResponseDto;
   }
 
-  async deleteBoard(request: DeleteBoardDto) {
-    const { id, password } = request;
+  async deleteBoard(requestDto: DeleteBoardDto) {
+    const { id, password } = requestDto;
 
     // 게시글 존재여부 및 비밀번호 일치여부 확인
     await this.confirmBoardPassword(id, password);
@@ -136,7 +147,7 @@ export class BoardsService {
     const board = await this.boardRepository.findOneById(id);
 
     if (!board) {
-      throw new NotFoundException(BOARD_NOT_FOUND);
+      throw new NotFoundException(NOT_FOUND_BOARD);
     }
 
     // 입력패스워드와 실제 패스워드 비교
