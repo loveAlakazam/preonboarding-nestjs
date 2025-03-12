@@ -12,6 +12,7 @@ import {
 } from "@src/commons/errors/commons.error-message";
 import { DEFAULT_COMMENT_CONTENT } from "@comments/constants/comment.constant";
 import { UpdateCommentRequestDto } from "@comments/dtos/update-comment.request.dto";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 
 describe("CommentsController", () => {
   let app: INestApplication;
@@ -49,7 +50,12 @@ describe("CommentsController", () => {
           },
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard)
+      .useValue({
+        canActivate: jest.fn().mockReturnValue(true),
+      })
+      .compile();
 
     commentService = module.get<CommentsService>(CommentsService);
     commentRepository = module.get<CommentRepository>(CommentRepository);
@@ -70,151 +76,159 @@ describe("CommentsController", () => {
     await app.close();
   });
 
-  describe("CommentController", () => {
-    const commentId = "1";
-    /**
-     * 댓글 생성
-     */
-    describe("createNewComment", () => {
-      describe("boardId", () => {
-        it("boardId 가 존재하지 않으면, BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            boardId: "", // invalid
-            userId: "1",
-            content: "",
-          };
+  const commentId = "1";
+  const MOCK_BEARER_TOKEN = "mock-bearer-token" as const;
+  /**
+   * 댓글 생성
+   */
+  describe("createNewComment", () => {
+    describe("boardId", () => {
+      it("boardId 가 존재하지 않으면, BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          boardId: "", // invalid
+          userId: "1",
+          content: "",
+        };
 
-          const response = await request(app.getHttpServer())
-            .post("/comments/")
-            .send(invalidRequest);
+        const response = await request(app.getHttpServer())
+          .post("/comments/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
 
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_EXIST("boardId"));
-        });
-        it("boardId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            boardId: true, // invalid
-            userId: "1",
-            content: "",
-          };
-
-          const response = await request(app.getHttpServer())
-            .post("/comments/")
-            .send(invalidRequest);
-
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_STRING("boardId"));
-        });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_EXIST("boardId"));
       });
-      describe("userId", () => {
-        it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            boardId: "1",
-            userId: undefined, // invalid
-            content: "",
-          };
+      it("boardId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          boardId: true, // invalid
+          userId: "1",
+          content: "",
+        };
 
-          const response = await request(app.getHttpServer())
-            .post("/comments/")
-            .send(invalidRequest);
+        const response = await request(app.getHttpServer())
+          .post("/comments/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
 
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
-        });
-        it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            boardId: "1",
-            userId: 1, // invalid
-            content: "",
-          };
-
-          const response = await request(app.getHttpServer())
-            .post("/comments/")
-            .send(invalidRequest);
-
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
-        });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_STRING("boardId"));
       });
     });
-    /**
-     * 댓글 수정
-     */
-    describe("updateComment", () => {
-      describe("userId", () => {
-        it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            userId: undefined, // invalid
-            content: "",
-          } as unknown as UpdateCommentRequestDto;
+    describe("userId", () => {
+      it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          boardId: "1",
+          userId: undefined, // invalid
+          content: "",
+        };
 
-          const response = await request(app.getHttpServer())
-            .patch(`/comments/${commentId}`)
-            .send(invalidRequest);
+        const response = await request(app.getHttpServer())
+          .post("/comments/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
 
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
-        });
-        it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            userId: 1, // invalid
-            content: "",
-          } as unknown as UpdateCommentRequestDto;
-
-          const response = await request(app.getHttpServer())
-            .patch(`/comments/${commentId}`)
-            .send(invalidRequest);
-
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
-        });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
       });
-      describe("content", () => {
-        it(`content 값이 비어있더라도 유효성검사에서 통과된다.`, async () => {
-          const updateRequest = {
-            userId: "1",
-            content: "",
-          } as UpdateCommentRequestDto;
+      it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          boardId: "1",
+          userId: 1, // invalid
+          content: "",
+        };
 
-          const response = await request(app.getHttpServer())
-            .patch(`/comments/${commentId}`)
-            .send(updateRequest);
+        const response = await request(app.getHttpServer())
+          .post("/comments/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
 
-          expect(response.status).not.toBe(400);
-        });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
       });
     });
-    /**
-     * 댓글 삭제
-     */
-    describe("deleteComment", () => {
-      describe("userId", () => {
-        it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            userId: undefined, // invalid
-            content: "",
-          } as unknown as UpdateCommentRequestDto;
+  });
+  /**
+   * 댓글 수정
+   */
+  describe("updateComment", () => {
+    describe("userId", () => {
+      it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          userId: undefined, // invalid
+          content: "",
+        } as unknown as UpdateCommentRequestDto;
 
-          const response = await request(app.getHttpServer())
-            .delete(`/comments/${commentId}`)
-            .send(invalidRequest);
+        const response = await request(app.getHttpServer())
+          .patch(`/comments/${commentId}`)
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
 
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
-        });
-        it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
-          const invalidRequest = {
-            userId: 1, // invalid
-            content: "",
-          } as unknown as UpdateCommentRequestDto;
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
+      });
+      it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          userId: 1, // invalid
+          content: "",
+        } as unknown as UpdateCommentRequestDto;
 
-          const response = await request(app.getHttpServer())
-            .delete(`/comments/${commentId}`)
-            .send(invalidRequest);
+        const response = await request(app.getHttpServer())
+          .patch(`/comments/${commentId}`)
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
 
-          expect(response.status).toBe(400);
-          expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
-        });
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
+      });
+    });
+    describe("content", () => {
+      it(`content 값이 비어있더라도 유효성검사에서 통과된다.`, async () => {
+        const updateRequest = {
+          userId: "1",
+          content: "",
+        } as UpdateCommentRequestDto;
+
+        const response = await request(app.getHttpServer())
+          .patch(`/comments/${commentId}`)
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(updateRequest);
+
+        expect(response.status).not.toBe(400);
+      });
+    });
+  });
+  /**
+   * 댓글 삭제
+   */
+  describe("deleteComment", () => {
+    describe("userId", () => {
+      it("userId가 존재하지 않으면 BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          userId: undefined, // invalid
+          content: "",
+        } as unknown as UpdateCommentRequestDto;
+
+        const response = await request(app.getHttpServer())
+          .delete(`/comments/${commentId}`)
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_EXIST("userId"));
+      });
+      it("userId 의 타입이 string이 아니라면, BadRequestException 예외가 발생한다", async () => {
+        const invalidRequest = {
+          userId: 1, // invalid
+          content: "",
+        } as unknown as UpdateCommentRequestDto;
+
+        const response = await request(app.getHttpServer())
+          .delete(`/comments/${commentId}`)
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
+          .send(invalidRequest);
+
+        expect(response.status).toBe(400);
+        expect(response.body.message).toContain(SHOULD_BE_STRING("userId"));
       });
     });
   });

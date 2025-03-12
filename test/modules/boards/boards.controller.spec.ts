@@ -16,12 +16,12 @@ import {
   BOARD_CONTENT_MIN_LENGTH,
   BOARD_PASSWORD_MIN_LENGTH,
   BOARD_TITLE_MIN_LENGTH,
-} from "@src/modules/boards/constants/board.constant";
+} from "@boards/constants/board.constant";
 import {
   NOT_FOUND_BOARD,
   NOT_CONFIRMED_BOARD_PASSWORD,
 } from "@boards/errors/board.error-message";
-import { JwtAuthGuard } from "@src/auth/jwt-auth.guard";
+import { JwtAuthGuard } from "@auth/jwt-auth.guard";
 
 describe("BoardsController", () => {
   let app: INestApplication;
