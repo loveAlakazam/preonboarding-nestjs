@@ -8,6 +8,7 @@ import {
   HttpCode,
   Body,
   Param,
+  UseGuards,
 } from "@nestjs/common";
 import { BoardsService } from "@boards/services/boards.service";
 import {
@@ -16,7 +17,6 @@ import {
   ApiOkResponse,
   ApiOperation,
   ApiParam,
-  ApiResponse,
 } from "@nestjs/swagger";
 import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
 import { UpdateBoardRequestDto } from "@boards/dtos/update-board.request.dto";
@@ -24,6 +24,7 @@ import { UnitOfList } from "@boards/dtos/get-list-of-boards.response.dto";
 import { DeleteBoardRequestDto } from "../dtos/delete-board.request.dto";
 import { GetBoardResponseDto } from "../dtos/get-board.response.dto";
 import { CreateNewBoardResponseDto } from "../dtos/create-new-board.response.dto";
+import { JwtAuthGuard } from "@src/auth/jwt-auth.guard";
 
 @Controller("boards")
 export class BoardsController {
@@ -32,6 +33,7 @@ export class BoardsController {
     private boardService: BoardsService,
   ) {}
   @Post()
+  @UseGuards(JwtAuthGuard)
   @HttpCode(201)
   @ApiOperation({ summary: "create new board" })
   @ApiCreatedResponse({
@@ -71,6 +73,7 @@ export class BoardsController {
   }
 
   @Patch(":id")
+  @UseGuards(JwtAuthGuard)
   @HttpCode(200)
   @ApiOperation({ summary: "update information of target board" })
   @ApiParam({
@@ -87,6 +90,7 @@ export class BoardsController {
   }
 
   @Delete(":id")
+  @UseGuards(JwtAuthGuard)
   @HttpCode(204)
   @ApiOperation({ summary: "soft delete target board" })
   @ApiParam({
@@ -95,6 +99,7 @@ export class BoardsController {
     description: "게시글 id",
     example: "1",
   })
+  @ApiNoContentResponse()
   async deleteBoard(
     @Param("id") id: string,
     @Body() request: DeleteBoardRequestDto,

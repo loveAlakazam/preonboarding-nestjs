@@ -7,6 +7,7 @@ import {
   Inject,
   Param,
   Body,
+  UseGuards,
 } from "@nestjs/common";
 import {
   ApiCreatedResponse,
@@ -19,7 +20,9 @@ import { CommentsService } from "@comments/services/comments.service";
 import { CreateNewCommentRequestDto } from "@comments/dtos/create-comment.request.dto";
 import { UpdateCommentRequestDto } from "../dtos/update-comment.request.dto";
 import { DeleteCommentRequestDto } from "../dtos/delete-comment.request.dto";
+import { JwtAuthGuard } from "@src/auth/jwt-auth.guard";
 
+@UseGuards(JwtAuthGuard)
 @Controller("comments")
 export class CommentsController {
   constructor(

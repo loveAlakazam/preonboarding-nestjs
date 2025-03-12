@@ -3,6 +3,7 @@
   "rootDir": ".",
   "moduleNameMapper": {
     "^@src/(.*)$": "<rootDir>/../src/$1",
+    "^@auth/(.*)$": "<rootDir>/../src/auth/$1",
     "^@users/(.*)$": "<rootDir>/../src/modules/users/$1",
     "^@boards/(.*)$": "<rootDir>/../src/modules/boards/$1",
     "^@comments/(.*)$": "<rootDir>/../src/modules/comments/$1"

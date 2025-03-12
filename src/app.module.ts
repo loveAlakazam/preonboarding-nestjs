@@ -5,11 +5,11 @@ import { TypeOrmModule } from "@nestjs/typeorm";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { UsersModule } from "@users/users.module";
 import { BoardsModule } from "./modules/boards/boards.module";
-import { CommentsController } from "./modules/comments/controllers/comments.controller";
 import { CommentsModule } from "./modules/comments/comments.module";
 import { UserEntity } from "@users/entity/users.entity";
 import { BoardEntity } from "@boards/entity/boards.entity";
 import { CommentEntity } from "@comments/entity/comments.entity";
+import { AuthModule } from "./auth/auth.module";
 
 @Module({
   imports: [
@@ -45,6 +45,7 @@ import { CommentEntity } from "@comments/entity/comments.entity";
     UsersModule,
     BoardsModule,
     CommentsModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
