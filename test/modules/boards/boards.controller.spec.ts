@@ -21,11 +21,13 @@ import {
   NOT_FOUND_BOARD,
   NOT_CONFIRMED_BOARD_PASSWORD,
 } from "@boards/errors/board.error-message";
+import { JwtAuthGuard } from "@src/auth/jwt-auth.guard";
 
 describe("BoardsController", () => {
   let app: INestApplication;
   let boardService: BoardsService;
   let boardRepository: BoardRepository;
+  const MOCK_BEARER_TOKEN = "mock-bearer-token" as const;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -54,7 +56,12 @@ describe("BoardsController", () => {
           useValue: {},
         },
       ],
-    }).compile();
+    })
+      .overrideGuard(JwtAuthGuard) // JWT Guard 를 Mock 처리
+      .useValue({
+        canActivate: jest.fn().mockResolvedValue(true),
+      })
+      .compile();
 
     boardService = module.get<BoardsService>(BoardsService);
     boardRepository = module.get<BoardRepository>(BoardRepository);
@@ -84,6 +91,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -100,6 +108,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -118,6 +127,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -134,6 +144,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -152,6 +163,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -168,6 +180,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -186,6 +199,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -202,6 +216,7 @@ describe("BoardsController", () => {
 
         const response = await request(app.getHttpServer())
           .post("/boards/")
+          .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
           .send(invalidRequest);
 
         expect(response.status).toBe(400);
@@ -225,6 +240,7 @@ describe("BoardsController", () => {
       const notExistedBoardId = "99";
       const response = await request(app.getHttpServer())
         .patch(`/boards/${notExistedBoardId}`)
+        .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
         .send({
           password: "1234",
         });
@@ -243,6 +259,7 @@ describe("BoardsController", () => {
 
       const response = await request(app.getHttpServer())
         .patch(`/boards/${boardId}`)
+        .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
         .send({
           password: "invalidPassword", // invalid
         });
@@ -256,6 +273,7 @@ describe("BoardsController", () => {
       const notExistedBoardId = "99";
       const response = await request(app.getHttpServer())
         .delete(`/boards/${notExistedBoardId}`)
+        .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
         .send({
           password: "1234",
         });
@@ -274,6 +292,7 @@ describe("BoardsController", () => {
 
       const response = await request(app.getHttpServer())
         .delete(`/boards/${boardId}`)
+        .set("Authorization", MOCK_BEARER_TOKEN) // 가짜토큰 추가
         .send({
           password: "invalidPassword", // invalid
         });
