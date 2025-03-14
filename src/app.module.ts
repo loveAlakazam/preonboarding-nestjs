@@ -10,6 +10,7 @@ import { UserEntity } from "@users/entity/users.entity";
 import { BoardEntity } from "@boards/entity/boards.entity";
 import { CommentEntity } from "@comments/entity/comments.entity";
 import { AuthModule } from "./auth/auth.module";
+import AppDataSource from "./database/mysql.datasource";
 
 @Module({
   imports: [
@@ -17,31 +18,16 @@ import { AuthModule } from "./auth/auth.module";
       envFilePath: (() => {
         switch (process.env.NODE_ENV) {
           case "production":
-            return "production.env";
+            return ".production.env";
+          case "test":
+            return ".test.env";
           default:
             return ".env";
         }
       })(),
       isGlobal: true,
     }),
-    TypeOrmModule.forRootAsync({
-      imports: [ConfigModule],
-      useFactory: (configService: ConfigService) => ({
-        type: "mysql",
-        host: configService.get<string>("DB_HOST", "localhost"),
-        port: configService.get<number>("DB_PORT", 3306),
-        username: configService.get<string>("DB_USERNAME"),
-        password: configService.get<string>("DB_PASSWORD"),
-        database: configService.get<string>("DB_NAME"),
-        synchronize:
-          configService.get<string>("NODE_ENV") === "production" ? false : true,
-        logging:
-          configService.get<string>("NODE_ENV") === "production" ? false : true,
-        entities: [UserEntity, BoardEntity, CommentEntity],
-        // dropSchema: configService.get<string>("NODE_ENV") === "production" ? false : true,
-      }),
-      inject: [ConfigService], // ConfigService 주입
-    }),
+    TypeOrmModule.forRoot(AppDataSource.options),
     UsersModule,
     BoardsModule,
     CommentsModule,
