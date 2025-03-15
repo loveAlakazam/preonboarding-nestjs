@@ -3,29 +3,23 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "./../src/app.module";
-import { UserRepository } from "@users/repositories/users.repository";
-import { UsersService } from "@users/services/users.service";
 import {
   ALREADY_EXIST_USER,
   LOGIN_FAILED,
 } from "@users/errors/users.error-message";
 import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
-import { BoardsService } from "@boards/services/boards.service";
-import { BoardRepository } from "@boards/repositories/boards.repository";
-import { CommentsService } from "@comments/services/comments.service";
-import { CommentRepository } from "@comments/repositories/comments.repository";
 import { CreateNewCommentRequestDto } from "@comments/dtos/create-comment.request.dto";
 import { DEFAULT_COMMENT_CONTENT } from "@comments/constants/comment.constant";
+import { StartedMySqlContainer } from "@testcontainers/mysql";
+import { setUpTestContainer } from "./\btest.helper";
+import { DataSource } from "typeorm";
 
 describe("AppController (e2e)", () => {
   let app: INestApplication<App>;
-  let userService: UsersService;
-  let userRepository: UserRepository;
-  let boardService: BoardsService;
-  let boardRepository: BoardRepository;
-  let commentService: CommentsService;
-  let commentRepository: CommentRepository;
+  let dbContainer: StartedMySqlContainer;
+  let dataSource: DataSource;
 
+  // variables & constants for test
   let accessToken; // 토큰
   let userId; // 유저아이디
   const testUser = {
@@ -37,6 +31,10 @@ describe("AppController (e2e)", () => {
   let commentId; // 댓글 아이디
 
   beforeAll(async () => {
+    // Mysql TestContainer 셋업 후 TypeORM 컨테이너변수 설정
+    dbContainer = await setUpTestContainer();
+
+    // Nestjs 앱 초기화
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -44,28 +42,30 @@ describe("AppController (e2e)", () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    userService = moduleFixture.get<UsersService>(UsersService);
-
-    boardRepository = moduleFixture.get<BoardRepository>(BoardRepository);
-    boardService = moduleFixture.get<BoardsService>(BoardsService);
-    commentRepository = moduleFixture.get<CommentRepository>(CommentRepository);
-    commentService = moduleFixture.get<CommentsService>(CommentsService);
-  });
+    // TypeORM 데이터베이스 연결확인
+    dataSource = moduleFixture.get<DataSource>(DataSource);
+    await dataSource.runMigrations(); // 마이그레이션 수행
+  }, 30 * 1000);
 
   afterAll(async () => {
-    // 댓글 삭제
-    await commentRepository.remove(commentId);
+    // 데이터를 모두 삭제한다.
+    const entities = dataSource.entityMetadatas;
+    for (const entity of entities) {
+      const repository = dataSource.getRepository(entity.name);
 
-    // 게시글 테스트데이터 삭제
-    await boardRepository.remove(boardIdForComment);
-    await boardRepository.remove(boardId);
+      // mysql에서는 truncate 쿼리문의경우 pk도 1부터 다시시작하게된다.
+      await repository.query(`TRUNCATE TABLE ${entity.tableName}`);
+    }
 
-    // user 테스트데이터 삭제
-    await userRepository.removeByNickname(testUser.nickname);
+    // DB연결(typeorm 연결) 해제
+    await dataSource.destroy();
 
+    // Mysql 컨테이너 종료
+    await dbContainer.stop();
+
+    // 애플리케이션 종료
     await app.close();
-  });
+  }, 30 * 1000);
 
   /**
    * Users
@@ -176,13 +176,7 @@ describe("AppController (e2e)", () => {
 
       // 응답데이터 검증
       expect(response.body).toBeDefined();
-      // expect(response.body.length).toBe(7);
-      expect(response.body.length).toBe(2);
-      // for (const r of response.body) {
-      //   expect(r.author).toBe(nickname);
-      //   expect(r.title).toBe(title);
-      //   expect(r.content).toBe(content);
-      // }
+      expect(response.body.length).toBe(1);
     });
     it("게시글 수정에 성공한다", async () => {
       const updatedTitle = "수정된 게시글 제목입니다.";
