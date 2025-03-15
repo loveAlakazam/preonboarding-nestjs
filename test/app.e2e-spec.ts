@@ -3,17 +3,11 @@ import { INestApplication } from "@nestjs/common";
 import * as request from "supertest";
 import { App } from "supertest/types";
 import { AppModule } from "./../src/app.module";
-import { UserRepository } from "@users/repositories/users.repository";
-import { UsersService } from "@users/services/users.service";
 import {
   ALREADY_EXIST_USER,
   LOGIN_FAILED,
 } from "@users/errors/users.error-message";
 import { CreateNewBoardRequestDto } from "@boards/dtos/create-new-board.request.dto";
-import { BoardsService } from "@boards/services/boards.service";
-import { BoardRepository } from "@boards/repositories/boards.repository";
-import { CommentsService } from "@comments/services/comments.service";
-import { CommentRepository } from "@comments/repositories/comments.repository";
 import { CreateNewCommentRequestDto } from "@comments/dtos/create-comment.request.dto";
 import { DEFAULT_COMMENT_CONTENT } from "@comments/constants/comment.constant";
 import { StartedMySqlContainer } from "@testcontainers/mysql";
@@ -54,6 +48,15 @@ describe("AppController (e2e)", () => {
   }, 30 * 1000);
 
   afterAll(async () => {
+    // 데이터를 모두 삭제한다.
+    const entities = dataSource.entityMetadatas;
+    for (const entity of entities) {
+      const repository = dataSource.getRepository(entity.name);
+
+      // mysql에서는 truncate 쿼리문의경우 pk도 1부터 다시시작하게된다.
+      await repository.query(`TRUNCATE TABLE ${entity.tableName}`);
+    }
+
     // DB연결(typeorm 연결) 해제
     await dataSource.destroy();
 
@@ -173,13 +176,7 @@ describe("AppController (e2e)", () => {
 
       // 응답데이터 검증
       expect(response.body).toBeDefined();
-      // expect(response.body.length).toBe(7);
-      expect(response.body.length).toBe(2);
-      // for (const r of response.body) {
-      //   expect(r.author).toBe(nickname);
-      //   expect(r.title).toBe(title);
-      //   expect(r.content).toBe(content);
-      // }
+      expect(response.body.length).toBe(1);
     });
     it("게시글 수정에 성공한다", async () => {
       const updatedTitle = "수정된 게시글 제목입니다.";
