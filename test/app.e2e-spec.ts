@@ -16,16 +16,16 @@ import { CommentsService } from "@comments/services/comments.service";
 import { CommentRepository } from "@comments/repositories/comments.repository";
 import { CreateNewCommentRequestDto } from "@comments/dtos/create-comment.request.dto";
 import { DEFAULT_COMMENT_CONTENT } from "@comments/constants/comment.constant";
+import { StartedMySqlContainer } from "@testcontainers/mysql";
+import { setUpTestContainer } from "./\btest.helper";
+import { DataSource } from "typeorm";
 
 describe("AppController (e2e)", () => {
   let app: INestApplication<App>;
-  let userService: UsersService;
-  let userRepository: UserRepository;
-  let boardService: BoardsService;
-  let boardRepository: BoardRepository;
-  let commentService: CommentsService;
-  let commentRepository: CommentRepository;
+  let dbContainer: StartedMySqlContainer;
+  let dataSource: DataSource;
 
+  // variables & constants for test
   let accessToken; // 토큰
   let userId; // 유저아이디
   const testUser = {
@@ -37,6 +37,10 @@ describe("AppController (e2e)", () => {
   let commentId; // 댓글 아이디
 
   beforeAll(async () => {
+    // Mysql TestContainer 셋업 후 TypeORM 컨테이너변수 설정
+    dbContainer = await setUpTestContainer();
+
+    // Nestjs 앱 초기화
     const moduleFixture: TestingModule = await Test.createTestingModule({
       imports: [AppModule],
     }).compile();
@@ -44,28 +48,21 @@ describe("AppController (e2e)", () => {
     app = moduleFixture.createNestApplication();
     await app.init();
 
-    userRepository = moduleFixture.get<UserRepository>(UserRepository);
-    userService = moduleFixture.get<UsersService>(UsersService);
-
-    boardRepository = moduleFixture.get<BoardRepository>(BoardRepository);
-    boardService = moduleFixture.get<BoardsService>(BoardsService);
-    commentRepository = moduleFixture.get<CommentRepository>(CommentRepository);
-    commentService = moduleFixture.get<CommentsService>(CommentsService);
-  });
+    // TypeORM 데이터베이스 연결확인
+    dataSource = moduleFixture.get<DataSource>(DataSource);
+    await dataSource.runMigrations(); // 마이그레이션 수행
+  }, 30 * 1000);
 
   afterAll(async () => {
-    // 댓글 삭제
-    await commentRepository.remove(commentId);
+    // DB연결(typeorm 연결) 해제
+    await dataSource.destroy();
 
-    // 게시글 테스트데이터 삭제
-    await boardRepository.remove(boardIdForComment);
-    await boardRepository.remove(boardId);
+    // Mysql 컨테이너 종료
+    await dbContainer.stop();
 
-    // user 테스트데이터 삭제
-    await userRepository.removeByNickname(testUser.nickname);
-
+    // 애플리케이션 종료
     await app.close();
-  });
+  }, 30 * 1000);
 
   /**
    * Users
