@@ -1395,9 +1395,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@nestjs/common@npm:^11.0.1":
-  version: 11.0.10
-  resolution: "@nestjs/common@npm:11.0.10"
+"@nestjs/common@npm:^11.0.16":
+  version: 11.0.17
+  resolution: "@nestjs/common@npm:11.0.17"
   dependencies:
     iterare: "npm:1.2.1"
     tslib: "npm:2.8.1"
@@ -1405,6 +1405,7 @@ __metadata:
   peerDependencies:
     class-transformer: "*"
     class-validator: "*"
+    file-type: ^20.4.1
     reflect-metadata: ^0.1.12 || ^0.2.0
     rxjs: ^7.1.0
   peerDependenciesMeta:
@@ -1412,7 +1413,9 @@ __metadata:
       optional: true
     class-validator:
       optional: true
-  checksum: 10c0/99b96f885c74c63fef9e111ba0aa72adc81d863a5df519d81b61c328837232a88ddfe7a2fb38ac4471864646f818f6398cf8809cc5dabc581e31a3641bf9af8d
+    file-type:
+      optional: true
+  checksum: 10c0/e5b80c215ac634650e28d2a35045aaf92f57babfb4082ec2dd744e61cd0262c94b1610863c75c74c4b381f59462dbdb5689bb5b92afc9bac32d0aa3373e756dc
   languageName: node
   linkType: hard
 
@@ -7589,7 +7592,7 @@ __metadata:
     "@eslint/eslintrc": "npm:^3.2.0"
     "@eslint/js": "npm:^9.18.0"
     "@nestjs/cli": "npm:^11.0.0"
-    "@nestjs/common": "npm:^11.0.1"
+    "@nestjs/common": "npm:^11.0.16"
     "@nestjs/config": "npm:^4.0.0"
     "@nestjs/core": "npm:^11.0.1"
     "@nestjs/jwt": "npm:^11.0.0"
